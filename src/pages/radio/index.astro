@@ -1,0 +1,60 @@
+---
+import { getEmDashCollection } from "emdash";
+import Base from "../../layouts/Base.astro";
+
+const { entries: shows, cacheHint } = await getEmDashCollection("radio");
+
+Astro.cache.set(cacheHint);
+
+const sorted = [...shows].sort((a, b) => {
+	const epA = a.data.episode_number;
+	const epB = b.data.episode_number;
+	if (epA != null && epB != null) return epB - epA;
+	const dateA = a.data.publishedAt?.getTime() ?? 0;
+	const dateB = b.data.publishedAt?.getTime() ?? 0;
+	return dateB - dateA;
+});
+
+const formatDate = (date: Date | null | undefined) => {
+	if (!date) return null;
+	return date.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+};
+---
+
+<Base title="Radio" description="Radio shows hosted by Steel Wagstaff">
+	<div class="posts-page">
+		<header class="page-header">
+			<h1 class="page-title">Radio</h1>
+			<p class="page-description">
+				{sorted.length} {sorted.length === 1 ? "show" : "shows"}
+			</p>
+		</header>
+
+		{
+			sorted.length === 0 ? (
+				<p class="empty">No shows yet.</p>
+			) : (
+				<div class="posts-list">
+					{sorted.map((show) => (
+						<article class="post-item">
+							<a href={`/radio/${show.id}`} class="post-link">
+								<div class="post-meta">
+									{show.data.episode_number != null && (
+										<span class="episode-number">Episode {show.data.episode_number}</span>
+									)}
+									{show.data.publishedAt && (
+										<time>{formatDate(show.data.publishedAt)}</time>
+									)}
+								</div>
+								<h2 class="post-title">{show.data.title}</h2>
+								{show.data.excerpt && (
+									<p class="post-excerpt">{show.data.excerpt}</p>
+								)}
+							</a>
+						</article>
+					))}
+				</div>
+			)
+		}
+	</div>
+</Base>

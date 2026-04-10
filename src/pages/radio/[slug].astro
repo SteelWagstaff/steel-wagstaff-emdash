@@ -1,0 +1,110 @@
+---
+import { getEmDashEntry, getSeoMeta } from "emdash";
+import { Image, PortableText } from "emdash/ui";
+import Base from "../../layouts/Base.astro";
+
+const { slug } = Astro.params;
+
+if (!slug) {
+	return Astro.redirect("/404");
+}
+
+const { entry: show, cacheHint } = await getEmDashEntry("radio", slug);
+
+if (!show) {
+	return Astro.redirect("/404");
+}
+
+Astro.cache.set(cacheHint);
+
+function getImageUrl(img: unknown): string | undefined {
+	if (!img || typeof img !== "object") return undefined;
+	const image = img as Record<string, unknown>;
+	if (typeof image.src === "string" && image.src) {
+		return image.src.startsWith("http")
+			? image.src
+			: `${Astro.url.origin}${image.src}`;
+	}
+	const meta = image.meta as Record<string, unknown> | undefined;
+	const storageKey =
+		(typeof meta?.storageKey === "string" ? meta.storageKey : undefined) ||
+		(typeof image.id === "string" ? image.id : undefined);
+	if (storageKey) {
+		return `${Astro.url.origin}/_emdash/api/media/file/${storageKey}`;
+	}
+	return undefined;
+}
+
+const featuredImageUrl = getImageUrl(show.data.featured_image);
+
+const seo = getSeoMeta(show, {
+	siteTitle: "Steel Wagstaff",
+	siteUrl: Astro.url.origin,
+	path: `/radio/${slug}`,
+	fallbackImage: featuredImageUrl,
+});
+
+const formatDate = (date: Date | null | undefined) => {
+	if (!date) return null;
+	return date.toLocaleDateString("en-US", {
+		year: "numeric",
+		month: "long",
+		day: "numeric",
+	});
+};
+
+const episodeNumber = (show.data as Record<string, unknown>).episode_number as number | undefined;
+const audioUrl = (show.data as Record<string, unknown>).audio_url as string | undefined;
+---
+
+<Base
+	title={seo.title}
+	description={seo.description ?? undefined}
+	image={seo.image ?? featuredImageUrl}
+>
+	<article class="post-full">
+		{
+			show.data.featured_image && (
+				<div class="post-hero">
+					<Image image={show.data.featured_image} class="post-hero-image" {...show.edit.featured_image} />
+				</div>
+			)
+		}
+
+		<div class="post-content-wrap">
+			<header class="post-header">
+				{episodeNumber != null && (
+					<p class="episode-label">Episode {episodeNumber}</p>
+				)}
+				<h1 class="post-title" {...show.edit.title}>{show.data.title}</h1>
+				<div class="post-meta">
+					{show.data.publishedAt && (
+						<time datetime={show.data.publishedAt.toISOString()}>
+							{formatDate(show.data.publishedAt)}
+						</time>
+					)}
+				</div>
+			</header>
+
+			{show.data.excerpt && (
+				<p class="post-excerpt post-lead" {...show.edit.excerpt}>
+					{show.data.excerpt}
+				</p>
+			)}
+
+			{audioUrl && (
+				<div class="audio-player">
+					<audio controls src={audioUrl} style="width: 100%">
+						<a href={audioUrl}>Download audio</a>
+					</audio>
+				</div>
+			)}
+
+			{show.data.content && (
+				<div class="post-body" {...show.edit.content}>
+					<PortableText value={show.data.content} />
+				</div>
+			)}
+		</div>
+	</article>
+</Base>

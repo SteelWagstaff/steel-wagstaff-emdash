@@ -1,0 +1,107 @@
+---
+import { getEmDashEntry, getSeoMeta } from "emdash";
+import { Image, PortableText } from "emdash/ui";
+import Base from "../../layouts/Base.astro";
+
+const { slug } = Astro.params;
+
+if (!slug) {
+	return Astro.redirect("/404");
+}
+
+const { entry, cacheHint } = await getEmDashEntry("music", slug);
+
+if (!entry) {
+	return Astro.redirect("/404");
+}
+
+Astro.cache.set(cacheHint);
+
+function getImageUrl(img: unknown): string | undefined {
+	if (!img || typeof img !== "object") return undefined;
+	const image = img as Record<string, unknown>;
+	if (typeof image.src === "string" && image.src) {
+		return image.src.startsWith("http")
+			? image.src
+			: `${Astro.url.origin}${image.src}`;
+	}
+	const meta = image.meta as Record<string, unknown> | undefined;
+	const storageKey =
+		(typeof meta?.storageKey === "string" ? meta.storageKey : undefined) ||
+		(typeof image.id === "string" ? image.id : undefined);
+	if (storageKey) {
+		return `${Astro.url.origin}/_emdash/api/media/file/${storageKey}`;
+	}
+	return undefined;
+}
+
+const featuredImageUrl = getImageUrl(entry.data.featured_image);
+
+const seo = getSeoMeta(entry, {
+	siteTitle: "Steel Wagstaff",
+	siteUrl: Astro.url.origin,
+	path: `/music/${slug}`,
+	fallbackImage: featuredImageUrl,
+});
+
+const formatDate = (date: Date | null | undefined) => {
+	if (!date) return null;
+	return date.toLocaleDateString("en-US", {
+		year: "numeric",
+		month: "long",
+		day: "numeric",
+	});
+};
+
+// Extract Spotify URL from spotify_url field or from content links
+const spotifyUrl: string | undefined = (entry.data as Record<string, unknown>).spotify_url as string | undefined;
+---
+
+<Base
+	title={seo.title}
+	description={seo.description ?? undefined}
+	image={seo.image ?? featuredImageUrl}
+>
+	<article class="post-full">
+		{
+			entry.data.featured_image && (
+				<div class="post-hero">
+					<Image image={entry.data.featured_image} class="post-hero-image" {...entry.edit.featured_image} />
+				</div>
+			)
+		}
+
+		<div class="post-content-wrap">
+			<header class="post-header">
+				<h1 class="post-title" {...entry.edit.title}>{entry.data.title}</h1>
+				<div class="post-meta">
+					{entry.data.publishedAt && (
+						<time datetime={entry.data.publishedAt.toISOString()}>
+							{formatDate(entry.data.publishedAt)}
+						</time>
+					)}
+				</div>
+			</header>
+
+			{entry.data.excerpt && (
+				<p class="post-excerpt post-lead" {...entry.edit.excerpt}>
+					{entry.data.excerpt}
+				</p>
+			)}
+
+			{spotifyUrl && (
+				<div class="spotify-embed">
+					<a href={spotifyUrl} target="_blank" rel="noopener noreferrer" class="spotify-link">
+						Open on Spotify ↗
+					</a>
+				</div>
+			)}
+
+			{entry.data.content && (
+				<div class="post-body" {...entry.edit.content}>
+					<PortableText value={entry.data.content} />
+				</div>
+			)}
+		</div>
+	</article>
+</Base>
