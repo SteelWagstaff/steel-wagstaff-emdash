@@ -1,0 +1,8 @@
+---
+// Renders raw HTML blocks imported from WordPress
+interface Props {
+  html?: string;
+}
+const { html } = Astro.props;
+---
+{html && <div class="wp-html-block" set:html={html} />}

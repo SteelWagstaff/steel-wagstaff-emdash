@@ -5,12 +5,29 @@
 
 import type { ContentBylineCredit, PortableTextBlock } from "emdash";
 
+export interface Music {
+  id: string;
+  slug: string | null;
+  status: string;
+  title?: string;
+  featured_image?: { id: string; src?: string; alt?: string; width?: number; height?: number };
+  content?: PortableTextBlock[];
+  spotify_url?: string;
+  excerpt?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  publishedAt: Date | null;
+  bylines?: ContentBylineCredit[];
+}
+
 export interface Page {
   id: string;
   slug: string | null;
   status: string;
   title: string;
   content?: PortableTextBlock[];
+  excerpt?: string;
+  featured_image?: { id: string; src?: string; alt?: string; width?: number; height?: number };
   createdAt: Date;
   updatedAt: Date;
   publishedAt: Date | null;
@@ -31,9 +48,27 @@ export interface Post {
   bylines?: ContentBylineCredit[];
 }
 
+export interface Radio {
+  id: string;
+  slug: string | null;
+  status: string;
+  title?: string;
+  featured_image?: { id: string; src?: string; alt?: string; width?: number; height?: number };
+  content?: PortableTextBlock[];
+  episode_number?: number;
+  audio_url?: string;
+  excerpt?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  publishedAt: Date | null;
+  bylines?: ContentBylineCredit[];
+}
+
 declare module "emdash" {
   interface EmDashCollections {
+    music: Music;
     pages: Page;
     posts: Post;
+    radio: Radio;
   }
 }

@@ -1,6 +1,9 @@
 ---
 import { getEmDashEntry, getSeoMeta } from "emdash";
 import { Image, PortableText } from "emdash/ui";
+import SpotifyAwareLink from "../../components/marks/SpotifyAwareLink.astro";
+import SpotifyEmbed from "../../components/blocks/SpotifyEmbed.astro";
+import { processContent } from "../../utils/content";
 import Base from "../../layouts/Base.astro";
 
 const { slug } = Astro.params;
@@ -102,7 +105,10 @@ const audioUrl = (show.data as Record<string, unknown>).audio_url as string | un
 
 			{show.data.content && (
 				<div class="post-body" {...show.edit.content}>
-					<PortableText value={show.data.content} />
+					<PortableText
+						value={processContent(show.data.content)}
+						components={{ type: { spotifyEmbed: SpotifyEmbed }, mark: { link: SpotifyAwareLink } }}
+					/>
 				</div>
 			)}
 		</div>

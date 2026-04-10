@@ -14,6 +14,9 @@ import {
 } from "emdash/ui";
 import Base from "../../layouts/Base.astro";
 import PostCard from "../../components/PostCard.astro";
+import SpotifyAwareLink from "../../components/marks/SpotifyAwareLink.astro";
+import SpotifyEmbed from "../../components/blocks/SpotifyEmbed.astro";
+import { processContent } from "../../utils/content";
 import { getReadingTime } from "../../utils/reading-time";
 
 const { slug } = Astro.params;
@@ -219,7 +222,10 @@ const publishDate =
 				</header>
 
 				<div class="article-content">
-					<PortableText value={post.data.content} />
+					<PortableText
+						value={processContent(post.data.content)}
+						components={{ type: { spotifyEmbed: SpotifyEmbed }, mark: { link: SpotifyAwareLink } }}
+					/>
 				</div>
 
 				<div class="article-comments">

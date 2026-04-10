@@ -1,0 +1,64 @@
+---
+/**
+ * Custom link mark that renders Spotify playlist/album/track/episode URLs
+ * as embedded iframes and falls back to a plain <a> for everything else.
+ */
+export interface Props {
+  node: {
+    markDef: {
+      _type: "link";
+      _key: string;
+      href: string;
+      blank?: boolean;
+    };
+  };
+}
+
+const { node } = Astro.props;
+const href = node?.markDef?.href ?? "";
+
+function spotifyEmbed(url: string): { type: string; id: string } | null {
+  // Modern: open.spotify.com/playlist/ID
+  // Legacy: open.spotify.com/user/USERNAME/playlist/ID
+  const m = url.match(/open\.spotify\.com\/(?:user\/[^/]+\/)?(playlist|track|album|episode|show)\/([A-Za-z0-9]+)/);
+  if (!m) return null;
+  return { type: m[1], id: m[2] };
+}
+
+const spotify = spotifyEmbed(href);
+const height = spotify?.type === "track" || spotify?.type === "episode" ? 152 : 352;
+---
+
+{spotify ? (
+  <div class="spotify-embed">
+    <iframe
+      src={`https://open.spotify.com/embed/${spotify.type}/${spotify.id}`}
+      width="100%"
+      height={height}
+      frameborder="0"
+      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+      loading="lazy"
+      title={`Spotify ${spotify.type}`}
+    ></iframe>
+  </div>
+) : (
+  <a
+    href={href}
+    target={node.markDef.blank ? "_blank" : undefined}
+    rel={node.markDef.blank ? "noopener noreferrer" : undefined}
+  >
+    <slot />
+  </a>
+)}
+
+<style>
+  .spotify-embed {
+    margin: 1.5rem 0;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .spotify-embed iframe {
+    display: block;
+    border: none;
+  }
+</style>

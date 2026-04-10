@@ -1,0 +1,43 @@
+---
+/**
+ * Renders a spotifyEmbed block (produced by processContent utility).
+ * These are bare Spotify URLs that were plain text in the original content.
+ */
+export interface Props {
+  node: {
+    _type: "spotifyEmbed";
+    _key: string;
+    url: string;
+    resourceType: string;
+    resourceId: string;
+  };
+}
+
+const { node } = Astro.props;
+const height = node.resourceType === "track" || node.resourceType === "episode" ? 152 : 352;
+const embedSrc = `https://open.spotify.com/embed/${node.resourceType}/${node.resourceId}`;
+---
+
+<div class="spotify-embed">
+  <iframe
+    src={embedSrc}
+    width="100%"
+    height={height}
+    frameborder="0"
+    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+    loading="lazy"
+    title={`Spotify ${node.resourceType}`}
+  ></iframe>
+</div>
+
+<style>
+  .spotify-embed {
+    margin: 1.5rem 0;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .spotify-embed iframe {
+    display: block;
+    border: none;
+  }
+</style>

@@ -1,0 +1,61 @@
+---
+/**
+ * Renders oEmbed / WordPress embed blocks.
+ * Falls back to a plain link if the provider isn't handled.
+ */
+interface Props {
+  url?: string;
+  provider?: string;
+  html?: string;
+}
+const { url, provider, html } = Astro.props;
+
+function spotifyEmbedUrl(rawUrl: string): string | null {
+  // https://open.spotify.com/playlist/ID or /track/ID or /album/ID
+  const m = rawUrl.match(/open\.spotify\.com\/(playlist|track|album|episode)\/([A-Za-z0-9]+)/);
+  if (!m) return null;
+  return `https://open.spotify.com/embed/${m[1]}/${m[2]}`;
+}
+
+function youtubeEmbedUrl(rawUrl: string): string | null {
+  const m = rawUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  if (!m) return null;
+  return `https://www.youtube-nocookie.com/embed/${m[1]}`;
+}
+
+const spotifyEmbed = url ? spotifyEmbedUrl(url) : null;
+const youtubeEmbed = url ? youtubeEmbedUrl(url) : null;
+---
+
+{spotifyEmbed ? (
+  <div class="embed-block embed-spotify">
+    <iframe
+      src={spotifyEmbed}
+      width="100%"
+      height="152"
+      frameborder="0"
+      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+      loading="lazy"
+      title="Spotify player"
+    ></iframe>
+  </div>
+) : youtubeEmbed ? (
+  <div class="embed-block embed-youtube">
+    <iframe
+      src={youtubeEmbed}
+      width="100%"
+      height="400"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+      loading="lazy"
+      title="YouTube video"
+    ></iframe>
+  </div>
+) : html ? (
+  <div class="embed-block embed-generic" set:html={html} />
+) : url ? (
+  <div class="embed-block embed-link">
+    <a href={url} target="_blank" rel="noopener noreferrer">{url}</a>
+  </div>
+) : null}
